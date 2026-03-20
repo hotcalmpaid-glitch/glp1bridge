@@ -5,73 +5,48 @@ const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Fraunces:it
 // ⬇️ UPDATE THIS CODE EVERY 15 DAYS
 const ACCESS_CODE = "GLPBRIDGE";
 
+// ⬇️ STAN STORE LINK FOR 30 DAYS TO STABLE
+const THIRTY_DAYS_LINK = "https://stan.store/hotcalmpaid/p/-usfy5q7e";
+
+// Mifflin-St Jeor — always sedentary baseline (1.2)
+// Physical job override bumps to light (1.375)
+function calculateNutrition(weightLbs, heightFt, heightIn, age, sex, physicalJob) {
+  const weightKg = weightLbs * 0.453592;
+  const heightCm = ((parseInt(heightFt) * 12) + parseInt(heightIn)) * 2.54;
+  const ageNum = parseInt(age) || 35;
+  const sexOffset = sex === "male" ? 5 : -161;
+  const bmr = (10 * weightKg) + (6.25 * heightCm) - (5 * ageNum) + sexOffset;
+  const activityMultiplier = physicalJob ? 1.375 : 1.2;
+  const tdee = Math.round(bmr * activityMultiplier);
+  const floor = sex === "male" ? 1600 : 1400;
+  const targetCals = Math.max(floor, tdee - 500);
+  const targetProtein = Math.min(150, Math.round(weightLbs * 0.6));
+  return { tdee, targetCals, targetProtein };
+}
+
 const css = `
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --forest: #1C4A2E;
-    --sage: #4A7C59;
-    --mint: #A8C5A0;
-    --cream: #F7F3EE;
-    --warm: #EDE4D8;
-    --coral: #C86B4F;
-    --text: #1C2B1E;
-    --muted: #6B7B6E;
+    --forest: #1C4A2E; --sage: #4A7C59; --mint: #A8C5A0;
+    --cream: #F7F3EE; --warm: #EDE4D8; --coral: #C86B4F;
+    --text: #1C2B1E; --muted: #6B7B6E;
   }
+  .app-wrap { min-height:100vh; background:var(--cream); font-family:'DM Sans',sans-serif; color:var(--text); }
 
-  .app-wrap { min-height: 100vh; background: var(--cream); font-family: 'DM Sans', sans-serif; color: var(--text); }
+  .gate-wrap { min-height:100vh; background:var(--forest); display:flex; align-items:center; justify-content:center; padding:24px; }
+  .gate-card { background:#fff; border-radius:24px; padding:48px 36px; max-width:420px; width:100%; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.2); }
+  .gate-icon { font-size:48px; margin-bottom:16px; }
+  .gate-card h1 { font-family:'Fraunces',serif; font-size:28px; color:var(--forest); margin-bottom:8px; }
+  .gate-card h1 em { font-style:italic; color:var(--sage); }
+  .gate-card p { color:var(--muted); font-size:14px; line-height:1.6; margin-bottom:28px; }
+  .gate-input { width:100%; padding:14px 18px; border:2px solid #E0D9D0; border-radius:12px; font-size:16px; font-family:'DM Sans',sans-serif; text-align:center; letter-spacing:2px; text-transform:uppercase; outline:none; transition:border-color 0.2s; margin-bottom:12px; color:var(--text); background:var(--cream); }
+  .gate-input:focus { border-color:var(--sage); background:#fff; }
+  .gate-input.error { border-color:var(--coral); }
+  .gate-error { color:var(--coral); font-size:13px; margin-bottom:12px; }
+  .gate-note { font-size:12px; color:var(--muted); margin-top:16px; line-height:1.5; }
+  .gate-note a { color:var(--sage); }
 
-  /* ACCESS GATE */
-  .gate-wrap {
-    min-height: 100vh;
-    background: var(--forest);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-  }
-  .gate-card {
-    background: #fff;
-    border-radius: 24px;
-    padding: 48px 36px;
-    max-width: 420px;
-    width: 100%;
-    text-align: center;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-  }
-  .gate-icon { font-size: 48px; margin-bottom: 16px; }
-  .gate-card h1 { font-family: 'Fraunces', serif; font-size: 28px; color: var(--forest); margin-bottom: 8px; }
-  .gate-card h1 em { font-style: italic; color: var(--sage); }
-  .gate-card p { color: var(--muted); font-size: 14px; line-height: 1.6; margin-bottom: 28px; }
-  .gate-input {
-    width: 100%;
-    padding: 14px 18px;
-    border: 2px solid #E0D9D0;
-    border-radius: 12px;
-    font-size: 16px;
-    font-family: 'DM Sans', sans-serif;
-    text-align: center;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    outline: none;
-    transition: border-color 0.2s;
-    margin-bottom: 12px;
-    color: var(--text);
-    background: var(--cream);
-  }
-  .gate-input:focus { border-color: var(--sage); background: #fff; }
-  .gate-input.error { border-color: var(--coral); }
-  .gate-error { color: var(--coral); font-size: 13px; margin-bottom: 12px; }
-  .gate-note { font-size: 12px; color: var(--muted); margin-top: 16px; line-height: 1.5; }
-  .gate-note a { color: var(--sage); }
-
-  .hero {
-    background: var(--forest);
-    padding: 40px 24px 52px;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-  }
+  .hero { background:var(--forest); padding:40px 24px 52px; text-align:center; position:relative; overflow:hidden; }
   .hero::before { content:''; position:absolute; top:-60px; left:-60px; width:280px; height:280px; border-radius:50%; background:rgba(168,197,160,0.1); }
   .hero::after { content:''; position:absolute; bottom:-70px; right:-40px; width:200px; height:200px; border-radius:50%; background:rgba(200,148,58,0.08); }
   .hero-badge { display:inline-block; background:rgba(168,197,160,0.2); color:var(--mint); border:1px solid rgba(168,197,160,0.3); border-radius:100px; padding:6px 18px; font-size:11px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:18px; }
@@ -80,7 +55,7 @@ const css = `
   .hero p { color:rgba(255,255,255,0.7); font-size:15px; max-width:480px; margin:0 auto; line-height:1.6; position:relative; z-index:1; }
 
   .steps-bar { background:#fff; border-bottom:1px solid #E8E2DA; padding:0 16px; display:flex; justify-content:center; overflow-x:auto; }
-  .step-tab { padding:14px 14px; font-size:12px; font-weight:500; color:var(--muted); border-bottom:3px solid transparent; white-space:nowrap; display:flex; align-items:center; gap:6px; }
+  .step-tab { padding:14px 12px; font-size:12px; font-weight:500; color:var(--muted); border-bottom:3px solid transparent; white-space:nowrap; display:flex; align-items:center; gap:6px; }
   .step-tab.active { color:var(--forest); border-bottom-color:var(--forest); }
   .step-tab.done { color:var(--sage); }
   .step-num { width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; background:#E8E2DA; color:var(--muted); flex-shrink:0; }
@@ -90,6 +65,31 @@ const css = `
   .container { max-width:680px; margin:0 auto; padding:32px 16px 80px; }
   .card { background:#fff; border-radius:18px; padding:28px 24px; box-shadow:0 2px 20px rgba(28,74,46,0.06); margin-bottom:16px; }
 
+  .medical-banner { background:#FFF8F0; border:1.5px solid #F0D5B0; border-radius:14px; padding:16px 20px; margin-bottom:20px; display:flex; gap:12px; align-items:flex-start; }
+  .medical-banner-icon { font-size:20px; flex-shrink:0; margin-top:1px; }
+  .medical-banner p { font-size:13px; color:#7A5228; line-height:1.6; }
+  .medical-banner strong { color:#5A3A18; }
+
+  .calorie-card { background:linear-gradient(135deg,#EBF4EE,#F0F7F2); border:1px solid #C5DFCC; border-radius:14px; padding:20px 22px; margin-bottom:20px; }
+  .calorie-card h4 { color:var(--forest); font-weight:700; font-size:14px; margin-bottom:12px; }
+  .calorie-row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:12px; }
+  .calorie-stat { background:#fff; border-radius:10px; padding:12px; text-align:center; }
+  .calorie-stat-num { font-family:'Fraunces',serif; font-size:22px; color:var(--forest); font-weight:700; }
+  .calorie-stat-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-top:2px; }
+  .calorie-note { font-size:12px; color:#3A5C42; line-height:1.5; }
+
+  .why-conservative { background:var(--forest); border-radius:12px; padding:16px 20px; margin-bottom:20px; display:flex; gap:12px; align-items:flex-start; }
+  .why-conservative-icon { font-size:20px; flex-shrink:0; margin-top:1px; }
+  .why-conservative h4 { color:#fff; font-size:13px; font-weight:700; margin-bottom:5px; }
+  .why-conservative p { color:rgba(255,255,255,0.75); font-size:12px; line-height:1.6; }
+
+  .physical-job-toggle { display:flex; align-items:flex-start; gap:14px; background:var(--warm); border-radius:12px; padding:16px 18px; cursor:pointer; margin-top:4px; border:1.5px solid transparent; transition:all 0.15s; }
+  .physical-job-toggle.selected { border-color:var(--sage); background:#EBF4EE; }
+  .physical-job-checkbox { width:20px; height:20px; border-radius:5px; border:1.5px solid #C0B8AF; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; font-size:12px; transition:all 0.15s; }
+  .physical-job-toggle.selected .physical-job-checkbox { background:var(--sage); border-color:var(--sage); color:#fff; }
+  .physical-job-text h5 { font-size:13px; font-weight:600; color:var(--forest); margin-bottom:3px; }
+  .physical-job-text p { font-size:12px; color:var(--muted); line-height:1.4; }
+
   .section-title { font-family:'Fraunces',serif; font-size:24px; color:var(--forest); margin-bottom:6px; }
   .section-sub { color:var(--muted); font-size:14px; margin-bottom:24px; line-height:1.5; }
 
@@ -98,6 +98,7 @@ const css = `
   .form-input { width:100%; padding:12px 14px; border:1.5px solid #DDD6CE; border-radius:10px; font-size:14px; font-family:'DM Sans',sans-serif; color:var(--text); background:var(--cream); outline:none; transition:border-color 0.2s; }
   .form-input:focus { border-color:var(--sage); background:#fff; }
   .form-row-two { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .form-row-three { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
 
   .tag-group { display:flex; flex-wrap:wrap; gap:8px; margin-top:4px; }
   .tag { padding:7px 14px; border-radius:100px; border:1.5px solid #DDD6CE; font-size:13px; cursor:pointer; transition:all 0.15s; background:var(--cream); color:var(--text); user-select:none; }
@@ -110,7 +111,9 @@ const css = `
   .btn-primary:disabled { opacity:0.55; cursor:not-allowed; }
   .btn-outline { background:transparent; border:1.5px solid var(--forest); color:var(--forest); }
   .btn-outline:hover { background:var(--forest); color:#fff; }
-  .btn-sm { padding:9px 16px; font-size:13px; }
+  .btn-sm { padding:9px 16px; font-size:13px; width:auto; }
+  .btn-coral { background:var(--coral); color:#fff; width:100%; margin-top:6px; }
+  .btn-coral:hover { background:#b55e44; }
 
   .edu-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
   .edu-card { background:var(--warm); border-radius:12px; padding:18px; }
@@ -124,20 +127,10 @@ const css = `
   .info-box ul { padding-left:18px; margin-top:5px; }
   .info-box li { margin-bottom:3px; }
 
-  .month-banner {
-    background: var(--forest);
-    border-radius: 12px;
-    padding: 16px 20px;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  .month-banner-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
-  .month-banner h4 { color: #fff; font-size: 14px; font-weight: 700; margin-bottom: 4px; }
-  .month-banner p { color: rgba(255,255,255,0.75); font-size: 13px; line-height: 1.5; }
-
-  .warn-box { background:#FFF8F0; border:1px solid #F0D5B0; border-radius:12px; padding:14px 18px; margin-bottom:16px; font-size:12px; color:#7A5228; line-height:1.5; display:flex; gap:10px; }
+  .month-banner { background:var(--forest); border-radius:12px; padding:16px 20px; margin-bottom:20px; display:flex; align-items:flex-start; gap:12px; }
+  .month-banner-icon { font-size:22px; flex-shrink:0; margin-top:2px; }
+  .month-banner h4 { color:#fff; font-size:14px; font-weight:700; margin-bottom:4px; }
+  .month-banner p { color:rgba(255,255,255,0.75); font-size:13px; line-height:1.5; }
 
   .spinner { width:44px; height:44px; border:3px solid #E8E2DA; border-top-color:var(--forest); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 16px; }
   @keyframes spin { to { transform:rotate(360deg); } }
@@ -165,33 +158,40 @@ const css = `
   .grocery-check { width:16px; height:16px; border-radius:4px; border:1.5px solid #C0B8AF; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:10px; }
   .grocery-item.checked .grocery-check { background:var(--sage); border-color:var(--sage); color:#fff; }
 
-  .stat-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; }
-  .stat-box { background:var(--warm); border-radius:12px; padding:16px; text-align:center; }
-  .stat-num { font-family:'Fraunces',serif; font-size:26px; color:var(--forest); font-weight:700; }
-  .stat-label { font-size:11px; color:var(--muted); margin-top:3px; text-transform:uppercase; letter-spacing:0.5px; }
+  .upsell-hero { background:linear-gradient(135deg,#1C4A2E 0%,#2D6B47 100%); border-radius:18px; padding:36px 28px; text-align:center; margin-bottom:16px; position:relative; overflow:hidden; }
+  .upsell-hero::before { content:''; position:absolute; top:-40px; right:-40px; width:180px; height:180px; border-radius:50%; background:rgba(168,197,160,0.12); }
+  .upsell-badge { display:inline-block; background:rgba(200,148,58,0.25); color:#E9C46A; border:1px solid rgba(200,148,58,0.3); border-radius:100px; padding:6px 16px; font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:16px; }
+  .upsell-hero h2 { font-family:'Fraunces',serif; font-size:clamp(22px,4vw,32px); color:#fff; line-height:1.2; margin-bottom:12px; position:relative; z-index:1; }
+  .upsell-hero h2 em { color:var(--mint); font-style:italic; }
+  .upsell-hero p { color:rgba(255,255,255,0.75); font-size:14px; line-height:1.6; max-width:460px; margin:0 auto; position:relative; z-index:1; }
+  .upsell-price { display:inline-flex; align-items:baseline; gap:6px; margin:20px 0 4px; }
+  .upsell-price .amount { font-family:'Fraunces',serif; font-size:48px; color:#fff; font-weight:700; }
+  .upsell-price .period { color:rgba(255,255,255,0.6); font-size:16px; }
 
-  .log-form { display:flex; gap:10px; align-items:flex-end; margin-bottom:20px; flex-wrap:wrap; }
-  .log-form .form-row { flex:1; min-width:120px; margin-bottom:0; }
-  .log-entry { display:flex; justify-content:space-between; align-items:center; padding:11px 14px; background:var(--cream); border-radius:8px; margin-bottom:7px; font-size:13px; }
-  .log-entry .date { color:var(--muted); font-size:11px; }
-  .log-entry .weight { font-weight:700; color:var(--forest); }
-  .change-down { color:var(--sage); font-size:11px; font-weight:600; }
-  .change-up { color:var(--coral); font-size:11px; font-weight:600; }
+  .get-item { display:flex; gap:14px; align-items:flex-start; padding:14px 0; border-bottom:1px solid #F0EBE4; }
+  .get-item:last-child { border-bottom:none; }
+  .get-icon { font-size:22px; flex-shrink:0; margin-top:1px; }
+  .get-item h4 { font-size:14px; font-weight:600; color:var(--forest); margin-bottom:3px; }
+  .get-item p { font-size:13px; color:var(--muted); line-height:1.5; }
 
-  .progress-bar-wrap { background:#E8E2DA; border-radius:100px; height:10px; overflow:hidden; margin:14px 0 6px; }
-  .progress-bar-fill { height:100%; background:linear-gradient(90deg,var(--sage),var(--forest)); border-radius:100px; transition:width 0.8s ease; }
+  .no-thanks { text-align:center; margin-top:14px; }
+  .no-thanks button { background:none; border:none; color:var(--muted); font-size:12px; cursor:pointer; text-decoration:underline; font-family:'DM Sans',sans-serif; }
+
+  .warn-box { background:#FFF8F0; border:1px solid #F0D5B0; border-radius:12px; padding:14px 18px; margin-bottom:16px; font-size:12px; color:#7A5228; line-height:1.5; display:flex; gap:10px; }
 
   @media (max-width:560px) {
-    .gate-card { padding: 36px 24px; }
+    .gate-card { padding:36px 24px; }
     .edu-grid { grid-template-columns:1fr; }
     .form-row-two { grid-template-columns:1fr; }
+    .form-row-three { grid-template-columns:1fr 1fr; }
     .grocery-grid { grid-template-columns:1fr; }
     .meal-item { grid-template-columns:60px 1fr; }
     .meal-cal { display:none; }
+    .calorie-row { grid-template-columns:1fr 1fr; }
   }
 `;
 
-const STEPS = ["Profile","Learn","Meal Plan","Groceries","Track"];
+const STEPS = ["Profile","Learn","Meal Plan","Groceries","Next Step"];
 const PROTEIN_OPTS = ["Chicken","Salmon","Ground Turkey","Ground Beef","Tuna","Shrimp","Steak","Eggs"];
 const CARB_OPTS = ["Sweet Potato","Beans","Brown Rice","Oats","Fruits","Quinoa"];
 const AVOID_OPTS = ["Soy/Soy Sauce","Dairy","Gluten","Nuts","Shellfish","Pork","Red Meat","None"];
@@ -201,40 +201,34 @@ function Tag({ label, selected, onToggle }) {
   return <div className={`tag${selected?" selected":""}`} onClick={onToggle}>{label}</div>;
 }
 
+function MedicalBanner() {
+  return (
+    <div className="medical-banner">
+      <div className="medical-banner-icon">🩺</div>
+      <p><strong>Medical disclaimer:</strong> This tool is for general wellness support only and is not a substitute for medical advice. Always follow the guidance of your doctor or healthcare provider — especially regarding your GLP-1 medication, nutrition needs, and any existing health conditions. Calorie estimates are approximations based on the Mifflin-St Jeor equation. Individual results vary significantly.</p>
+    </div>
+  );
+}
+
 function AccessGate({ onUnlock }) {
   const [code, setCode] = useState("");
   const [error, setError] = useState(false);
-
   const handleSubmit = () => {
-    if (code.trim().toUpperCase() === ACCESS_CODE) {
-      onUnlock();
-    } else {
-      setError(true);
-      setTimeout(() => setError(false), 2500);
-    }
+    if (code.trim().toUpperCase() === ACCESS_CODE) { onUnlock(); }
+    else { setError(true); setTimeout(()=>setError(false), 2500); }
   };
-
   return (
     <div className="gate-wrap">
       <div className="gate-card">
         <div className="gate-icon">🌿</div>
         <h1>GLP-1 <em>Bridge</em><br/>Program</h1>
         <p>Enter your access code from your purchase confirmation email to get started.</p>
-        <input
-          className={`gate-input${error?" error":""}`}
-          placeholder="Enter code"
-          value={code}
+        <input className={`gate-input${error?" error":""}`} placeholder="Enter code" value={code}
           onChange={e=>{ setCode(e.target.value); setError(false); }}
-          onKeyDown={e=>e.key==="Enter"&&handleSubmit()}
-          maxLength={20}
-        />
+          onKeyDown={e=>e.key==="Enter"&&handleSubmit()} maxLength={20} />
         {error && <p className="gate-error">That code doesn't look right. Check your confirmation email and try again.</p>}
-        <button className="btn btn-primary" onClick={handleSubmit} disabled={!code.trim()}>
-          Unlock My Plan →
-        </button>
-        <p className="gate-note">
-          Don't have a code? <a href="YOUR_STAN_STORE_LINK_HERE" target="_blank" rel="noreferrer">Get access here for $17 →</a>
-        </p>
+        <button className="btn btn-primary" onClick={handleSubmit} disabled={!code.trim()}>Unlock My Plan →</button>
+        <p className="gate-note">Don't have a code yet? <a href={THIRTY_DAYS_LINK} target="_blank" rel="noreferrer">Get access here for $17 →</a></p>
       </div>
     </div>
   );
@@ -243,68 +237,80 @@ function AccessGate({ onUnlock }) {
 export default function App() {
   const [unlocked, setUnlocked] = useState(false);
   const [step, setStep] = useState(0);
-  const [profile, setProfile] = useState({ heightFt:"", heightIn:"", weight:"", goalWeight:"", activityLevel:"light", proteins:[], carbs:[], avoid:[], cooking:[], notes:"" });
+  const [profile, setProfile] = useState({
+    heightFt:"", heightIn:"", weight:"", goalWeight:"",
+    age:"", sex:"female", physicalJob:false,
+    proteins:[], carbs:[], avoid:[], cooking:[], notes:""
+  });
+  const [nutrition, setNutrition] = useState(null);
   const [mealPlan, setMealPlan] = useState(null);
   const [groceryList, setGroceryList] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [checked, setChecked] = useState({});
-  const [logs, setLogs] = useState([]);
-  const [logWeight, setLogWeight] = useState("");
-  const [logDate, setLogDate] = useState(new Date().toISOString().split("T")[0]);
 
   const toggleTag = (field, val) => setProfile(p => ({ ...p, [field]: p[field].includes(val) ? p[field].filter(x=>x!==val) : [...p[field],val] }));
-  const canContinue = profile.weight && profile.heightFt && profile.proteins.length > 0;
+  const canContinue = profile.weight && profile.heightFt && profile.age && profile.proteins.length > 0;
 
-  const startWeight = logs.length > 0 ? logs[0].weight : parseFloat(profile.weight)||0;
-  const currentWeight = logs.length > 0 ? logs[logs.length-1].weight : startWeight;
-  const totalLost = startWeight - currentWeight;
-  const goal = parseFloat(profile.goalWeight)||(startWeight-20);
-  const pct = startWeight > goal ? Math.min(100,(totalLost/(startWeight-goal))*100) : 0;
+  const handleContinueToLearn = () => {
+    const n = calculateNutrition(
+      parseFloat(profile.weight), profile.heightFt, profile.heightIn,
+      profile.age, profile.sex, profile.physicalJob
+    );
+    setNutrition(n);
+    setStep(1);
+  };
 
   const generatePlan = async () => {
     setLoading(true); setError("");
+    const n = nutrition || calculateNutrition(
+      parseFloat(profile.weight), profile.heightFt, profile.heightIn,
+      profile.age, profile.sex, profile.physicalJob
+    );
     try {
-      const prompt = `You are a clinical nutritionist. Create a 7-day whole foods meal plan for a GLP-1 candidate.
-Profile: ${profile.heightFt}ft ${profile.heightIn}in, ${profile.weight}lbs, goal: ${profile.goalWeight||"unspecified"}lbs, activity: ${profile.activityLevel}
-Proteins: ${profile.proteins.join(", ")||"any"} | Carbs: ${profile.carbs.join(", ")||"any"} | Avoid: ${profile.avoid.join(", ")||"none"} | Style: ${profile.cooking.join(", ")||"any"}
-Notes: ${profile.notes||"none"}
+      const prompt = `You are a registered dietitian creating a medically responsible 7-day meal plan for a GLP-1 medication candidate.
 
-High protein (130-145g/day), moderate-low carb, whole foods only, exciting and varied meals. No soy sauce if soy is in avoid list. Make meals genuinely appetizing — think steak chimichurri, Greek bowls, salmon with herbs, burger bowls, not sad diet food.
+Patient stats:
+- Height: ${profile.heightFt}ft ${profile.heightIn}in | Weight: ${profile.weight}lbs | Age: ${profile.age} | Sex: ${profile.sex}
+- Activity baseline: ${profile.physicalJob ? "light (physically demanding job)" : "sedentary (conservative baseline)"}
+- Estimated TDEE: ${n.tdee} calories/day
+- TARGET daily calories: ${n.targetCals} (conservative 500-calorie deficit for ~0.5–1lb/week loss)
+- TARGET daily protein: ${n.targetProtein}g (0.6g per lb of body weight)
+- Goal weight: ${profile.goalWeight || "not specified"}lbs
 
-Respond ONLY with valid JSON, no markdown:
-{"weeklyCalories":1750,"weeklyProtein":138,"days":[{"day":"Monday","meals":{"breakfast":{"name":"...","description":"...","calories":300,"protein":28},"lunch":{"name":"...","description":"...","calories":420,"protein":38},"snack":{"name":"...","description":"...","calories":200,"protein":15},"dinner":{"name":"...","description":"...","calories":490,"protein":42}}}],"grocery":{"Proteins":["..."],"Produce":["..."],"Dairy & Eggs":["..."],"Pantry & Canned":["..."],"Spices & Condiments":["..."]}}`;
+Food preferences:
+- Proteins: ${profile.proteins.join(", ")||"any"}
+- Complex carbs: ${profile.carbs.join(", ")||"any"}
+- Avoid: ${profile.avoid.join(", ")||"none"}
+- Cooking style: ${profile.cooking.join(", ")||"any"}
+- Notes: ${profile.notes||"none"}
+
+STRICT REQUIREMENTS:
+1. Each day's TOTAL calories must land within 50 calories of ${n.targetCals}
+2. Each day's TOTAL protein must land within 8g of ${n.targetProtein}g
+3. Meals must be genuinely appetizing — steak chimichurri with black beans, Greek turkey bowls with tzatziki and feta, baked or sautéed salmon with lemon and herbs, cottage cheese and berry bowls with chia seeds, burger bowls without the bun, sweet potato and ground beef skillets, tuna avocado lettuce wraps, chicken salad with grapes and Greek yogurt dressing, garbanzo bean and roasted veggie bowls, shrimp stir fry with cauliflower rice. Real food people want to eat — not bland diet food.
+4. No soy sauce if soy is in avoid list — use coconut aminos, lemon, herbs, red wine vinegar instead
+5. Use beans, chia seeds, and vegetables generously for fiber
+6. Be precise with calorie and protein counts — verify each meal adds up correctly
+7. Distribute calories roughly: breakfast 22%, lunch 30%, snack 13%, dinner 35%
+8. Distribute protein roughly: breakfast 25%, lunch 30%, snack 12%, dinner 33%
+
+Respond ONLY in valid JSON with no markdown, no preamble:
+{"weeklyCalories":${n.targetCals},"weeklyProtein":${n.targetProtein},"days":[{"day":"Monday","meals":{"breakfast":{"name":"...","description":"...","calories":0,"protein":0},"lunch":{"name":"...","description":"...","calories":0,"protein":0},"snack":{"name":"...","description":"...","calories":0,"protein":0},"dinner":{"name":"...","description":"...","calories":0,"protein":0}}}],"grocery":{"Proteins":["..."],"Produce":["..."],"Dairy & Eggs":["..."],"Pantry & Canned":["..."],"Spices & Condiments":["..."]}}`;
 
       const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
+        method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:4000, messages:[{role:"user",content:prompt}] })
       });
       const data = await res.json();
       const text = data.content.map(b=>b.text||"").join("").replace(/```json|```/g,"").trim();
       const parsed = JSON.parse(text);
-      setMealPlan(parsed);
-      setGroceryList(parsed.grocery);
-      setStep(2);
-    } catch(e) {
-      setError("Something went wrong generating your plan. Please try again.");
-    }
+      setMealPlan(parsed); setGroceryList(parsed.grocery); setStep(2);
+    } catch(e) { setError("Something went wrong generating your plan. Please try again."); }
     setLoading(false);
   };
 
-  const addLog = () => {
-    const w = parseFloat(logWeight);
-    if (!w||!logDate) return;
-    setLogs(prev => [...prev,{weight:w,date:logDate}].sort((a,b)=>a.date.localeCompare(b.date)));
-    setLogWeight("");
-  };
-
-  if (!unlocked) return (
-    <>
-      <style>{FONTS}{css}</style>
-      <AccessGate onUnlock={()=>setUnlocked(true)} />
-    </>
-  );
+  if (!unlocked) return (<><style>{FONTS}{css}</style><AccessGate onUnlock={()=>setUnlocked(true)} /></>);
 
   return (
     <>
@@ -312,12 +318,12 @@ Respond ONLY with valid JSON, no markdown:
       <div className="app-wrap">
         <div className="hero">
           <div className="hero-badge">🌿 GLP-1 Bridge Program</div>
-          <h1>Lose Weight <em>Before</em><br/>Your Medication Arrives</h1>
-          <p>A personalized whole foods plan built for people waiting on GLP-1 approval. Start now. Arrive stronger.</p>
+          <h1>Start <em>Before</em><br/>Your Medication Arrives</h1>
+          <p>A personalized whole foods plan for people waiting on GLP-1 approval. Your body is ready when you are.</p>
         </div>
 
         <div className="steps-bar">
-          {STEPS.map((s,i) => (
+          {STEPS.map((s,i)=>(
             <div key={i} className={`step-tab${step===i?" active":""}${step>i?" done":""}`}>
               <div className="step-num">{step>i?"✓":i+1}</div>{s}
             </div>
@@ -329,21 +335,46 @@ Respond ONLY with valid JSON, no markdown:
           {/* STEP 0 — PROFILE */}
           {step===0 && (
             <div>
+              <MedicalBanner />
               <div className="card">
                 <p className="section-title">Your profile</p>
-                <p className="section-sub">We use this to calculate your calorie targets and build around what you actually like to eat.</p>
-                <div className="form-row-two">
+                <p className="section-sub">We use the Mifflin-St Jeor equation to calculate your personal calorie targets. Age and biological sex are required for an accurate result.</p>
+
+                <div className="form-row-three">
                   <div className="form-row"><label className="form-label">Height (ft)</label><input className="form-input" type="number" placeholder="5" value={profile.heightFt} onChange={e=>setProfile(p=>({...p,heightFt:e.target.value}))} /></div>
                   <div className="form-row"><label className="form-label">Height (in)</label><input className="form-input" type="number" placeholder="6" value={profile.heightIn} onChange={e=>setProfile(p=>({...p,heightIn:e.target.value}))} /></div>
+                  <div className="form-row"><label className="form-label">Age</label><input className="form-input" type="number" placeholder="35" value={profile.age} onChange={e=>setProfile(p=>({...p,age:e.target.value}))} /></div>
                 </div>
+
                 <div className="form-row-two">
                   <div className="form-row"><label className="form-label">Current weight (lbs)</label><input className="form-input" type="number" placeholder="276" value={profile.weight} onChange={e=>setProfile(p=>({...p,weight:e.target.value}))} /></div>
                   <div className="form-row"><label className="form-label">Goal weight (lbs)</label><input className="form-input" type="number" placeholder="230" value={profile.goalWeight} onChange={e=>setProfile(p=>({...p,goalWeight:e.target.value}))} /></div>
                 </div>
+
                 <div className="form-row">
-                  <label className="form-label">Activity level</label>
+                  <label className="form-label">Biological sex (used for calorie calculation only)</label>
                   <div className="tag-group">
-                    {["Sedentary","Light","Moderate","Active"].map(l=><Tag key={l} label={l} selected={profile.activityLevel===l.toLowerCase()} onToggle={()=>setProfile(p=>({...p,activityLevel:l.toLowerCase()}))} />)}
+                    {["female","male"].map(s=><Tag key={s} label={s.charAt(0).toUpperCase()+s.slice(1)} selected={profile.sex===s} onToggle={()=>setProfile(p=>({...p,sex:s}))} />)}
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <label className="form-label">Job type</label>
+                  <div className={`physical-job-toggle${profile.physicalJob?" selected":""}`}
+                    onClick={()=>setProfile(p=>({...p,physicalJob:!p.physicalJob}))}>
+                    <div className="physical-job-checkbox">{profile.physicalJob?"✓":""}</div>
+                    <div className="physical-job-text">
+                      <h5>My job is physically demanding</h5>
+                      <p>Check this only if your work involves sustained physical labor — construction, nursing, warehouse, landscaping, etc. Office work, driving, retail standing, and light walking do not qualify.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="why-conservative">
+                  <div className="why-conservative-icon">💡</div>
+                  <div>
+                    <h4>Why we default to sedentary</h4>
+                    <p>Most people significantly overestimate their daily movement. "Going to the gym twice a week" or "being on your feet at work" does not change your baseline calorie burn the way most people assume. We calculate conservatively so your deficit is real — not theoretical. Your doctor can always adjust upward if needed.</p>
                   </div>
                 </div>
               </div>
@@ -355,56 +386,79 @@ Respond ONLY with valid JSON, no markdown:
                 <div className="form-row"><label className="form-label">Complex carbs</label><div className="tag-group">{CARB_OPTS.map(o=><Tag key={o} label={o} selected={profile.carbs.includes(o)} onToggle={()=>toggleTag("carbs",o)} />)}</div></div>
                 <div className="form-row"><label className="form-label">Foods to avoid</label><div className="tag-group">{AVOID_OPTS.map(o=><Tag key={o} label={o} selected={profile.avoid.includes(o)} onToggle={()=>toggleTag("avoid",o)} />)}</div></div>
                 <div className="form-row"><label className="form-label">Cooking style</label><div className="tag-group">{COOKING_OPTS.map(o=><Tag key={o} label={o} selected={profile.cooking.includes(o)} onToggle={()=>toggleTag("cooking",o)} />)}</div></div>
-                <div className="form-row"><label className="form-label">Anything else we should know?</label><textarea className="form-input" rows={2} placeholder="e.g. high blood pressure, hate mushrooms, cooking for a family of 4..." style={{resize:"vertical"}} value={profile.notes} onChange={e=>setProfile(p=>({...p,notes:e.target.value}))} /></div>
+                <div className="form-row"><label className="form-label">Anything else we should know?</label><textarea className="form-input" rows={2} placeholder="e.g. high blood pressure, hate mushrooms, cooking for a family..." style={{resize:"vertical"}} value={profile.notes} onChange={e=>setProfile(p=>({...p,notes:e.target.value}))} /></div>
               </div>
 
-              {!canContinue && <p style={{textAlign:"center",color:"var(--muted)",fontSize:12,marginBottom:10}}>Enter your height, weight, and at least one protein preference to continue.</p>}
-              <button className="btn btn-primary" disabled={!canContinue} onClick={()=>setStep(1)}>Continue →</button>
+              {!canContinue && <p style={{textAlign:"center",color:"var(--muted)",fontSize:12,marginBottom:10}}>Enter your height, weight, age, and at least one protein preference to continue.</p>}
+              <button className="btn btn-primary" disabled={!canContinue} onClick={handleContinueToLearn}>Continue →</button>
             </div>
           )}
 
           {/* STEP 1 — EDUCATION */}
-          {step===1 && (
+          {step===1 && nutrition && (
             <div>
+              <MedicalBanner />
+              <div className="calorie-card">
+                <h4>🧮 Your personalized targets</h4>
+                <div className="calorie-row">
+                  <div className="calorie-stat">
+                    <div className="calorie-stat-num">{nutrition.tdee}</div>
+                    <div className="calorie-stat-label">Maintenance</div>
+                  </div>
+                  <div className="calorie-stat">
+                    <div className="calorie-stat-num">{nutrition.targetCals}</div>
+                    <div className="calorie-stat-label">Your target</div>
+                  </div>
+                  <div className="calorie-stat">
+                    <div className="calorie-stat-num">{nutrition.targetProtein}g</div>
+                    <div className="calorie-stat-label">Protein / day</div>
+                  </div>
+                </div>
+                <p className="calorie-note">Your meal plan will be built to hit {nutrition.targetCals} calories and {nutrition.targetProtein}g of protein daily — a conservative 500-calorie deficit from your estimated maintenance. These are starting estimates based on the Mifflin-St Jeor equation. Your doctor may advise different targets based on your full health picture.</p>
+              </div>
+
               <div className="card">
                 <p className="section-title">What you need to know</p>
-                <p className="section-sub">You've been told you need GLP-1s. Here's why starting your diet right now is the smartest move you can make.</p>
+                <p className="section-sub">Here's what the evidence actually says — no hype, no promises.</p>
                 <div className="edu-grid">
                   {[
-                    ["💉","What are GLP-1s?","Medications like Ozempic and Wegovy that mimic a gut hormone, slowing digestion and reducing appetite. They work best when paired with real diet habits."],
-                    ["⏳","Why act now?","Insurance approval takes weeks or months. Every week without changing your diet is progress left on the table. Start now and arrive to your medication stronger."],
-                    ["🍽️","What GLP-1s do","They dramatically reduce hunger. If you build your eating habits now, you'll work with the medication — not against it."],
-                    ["💪","Protect your muscle","High protein intake is critical during fat loss. This plan is built around hitting your protein targets every single day so you lose fat, not muscle."]
+                    ["💉","What are GLP-1s?","Medications like Ozempic and Wegovy that work with your body's gut hormones to reduce appetite and slow digestion. They're most effective when paired with sustainable diet changes."],
+                    ["⏳","Why act now?","Insurance approval can take weeks or longer. Starting whole foods habits now means you arrive to your medication having already built a foundation."],
+                    ["🍽️","What GLP-1s do","They reduce hunger significantly. Building your eating habits before the medication arrives means you'll be ready to work with it from day one."],
+                    ["💪","Protect your muscle","Adequate protein during fat loss helps preserve muscle mass. This plan prioritizes hitting your protein target every single day."]
                   ].map(([icon,title,desc])=>(
                     <div className="edu-card" key={title}><div className="edu-icon">{icon}</div><h4>{title}</h4><p>{desc}</p></div>
                   ))}
                 </div>
+
                 <div className="info-box">
-                  <h4>📉 Your realistic 3-month outlook</h4>
+                  <h4>📉 Honest expectations — because you deserve the truth</h4>
+                  <p style={{marginBottom:8}}>A 500-calorie daily deficit is designed for approximately 0.5–1 lb of fat loss per week. Here's what that realistically looks like:</p>
                   <ul>
-                    <li><strong>Week 1–2:</strong> 5–10 lbs (water weight from cutting processed carbs)</li>
-                    <li><strong>Weeks 3–12:</strong> 1.5–2 lbs per week of true fat loss</li>
-                    <li><strong>Month 1 total:</strong> 10–16 lbs with consistency</li>
-                    <li><strong>3 months total:</strong> 18–28 lbs possible</li>
+                    <li><strong>First 1–2 weeks:</strong> You may see a larger initial drop from water weight as you reduce processed foods and sodium. This is temporary and not pure fat loss.</li>
+                    <li><strong>Ongoing:</strong> 0.5–1 lb of actual fat loss per week with consistency. Over a month that may be 4–6 lbs of fat — meaningful, sustainable progress.</li>
+                    <li><strong>The real goal right now:</strong> Building the habits and baseline your medication can amplify when it arrives.</li>
                   </ul>
+                  <p style={{marginTop:10,fontStyle:"italic"}}>Anyone promising dramatic rapid results from diet alone is not being straight with you. Slow and steady is not a consolation prize — it's how lasting change actually works.</p>
                 </div>
+
                 <div className="info-box">
-                  <h4>🥦 The rules that drive results</h4>
+                  <h4>🥦 The foundations that actually drive results</h4>
                   <ul>
-                    <li><strong>Protein first</strong> at every meal — aim for 130g+ per day</li>
+                    <li><strong>Protein first</strong> at every meal — supports fullness and muscle preservation</li>
                     <li><strong>Whole foods only</strong> — if it has 15 ingredients, skip it</li>
-                    <li><strong>Fiber is your hunger manager</strong> — beans, chia seeds, vegetables</li>
-                    <li><strong>Walk 30 min daily</strong> — even slow walking doubles fat loss at this stage</li>
-                    <li><strong>80–100oz of water</strong> — thirst masquerades as hunger constantly</li>
+                    <li><strong>Fiber manages hunger</strong> — beans, chia seeds, non-starchy vegetables</li>
+                    <li><strong>Movement matters</strong> — even a 20–30 min daily walk supports progress meaningfully</li>
+                    <li><strong>Water first</strong> — 80–100oz daily; thirst often masquerades as hunger</li>
+                    <li><strong>Sleep is not optional</strong> — poor sleep significantly disrupts hunger hormones and fat loss</li>
                   </ul>
                 </div>
-                <div className="warn-box"><span>⚠️</span><span>This is a wellness tool, not medical advice. Keep your GLP-1 approval process moving — diet and medication work together, not in competition.</span></div>
               </div>
 
               <button className="btn btn-primary" onClick={generatePlan} disabled={loading}>
-                {loading ? "Building your plan..." : "✨ Generate My Personalized Meal Plan"}
+                {loading?"Building your plan...":"✨ Generate My Personalized Meal Plan"}
               </button>
-              {loading && <div className="loading-wrap"><div className="spinner"/><h3>Crafting your plan...</h3><p>Personalizing your 7-day rotation based on your preferences</p></div>}
+              {loading && <div className="loading-wrap"><div className="spinner"/><h3>Building your plan...</h3><p>Calculating meals to match your exact targets</p></div>}
               {error && <p style={{color:"var(--coral)",textAlign:"center",marginTop:12,fontSize:13}}>{error}</p>}
               <div style={{marginTop:12}}><button className="btn btn-outline btn-sm" onClick={()=>setStep(0)}>← Back</button></div>
             </div>
@@ -415,22 +469,25 @@ Respond ONLY with valid JSON, no markdown:
             <div>
               <div className="card">
                 <p className="section-title">Your 7-day meal plan</p>
-                <p className="section-sub">Built around your preferences. This is your full 30-day program.</p>
-
+                <p className="section-sub">Built to hit your personal calorie and protein targets. Repeat for the full month.</p>
                 <div className="month-banner">
                   <div className="month-banner-icon">🔁</div>
                   <div>
                     <h4>This 7-day rotation is your full 30-day plan</h4>
-                    <p>Repeat it 4 times over the next month. Consistency over variety is what actually moves the scale. The repetition removes decision fatigue — one of the biggest enemies of progress.</p>
+                    <p>Repeat it 4 times. Consistency over variety is what moves the needle. Removing daily food decisions is one of the most underrated tools for follow-through.</p>
                   </div>
                 </div>
-
-                <div className="stat-row">
-                  <div className="stat-box"><div className="stat-num">~{mealPlan.weeklyCalories}</div><div className="stat-label">Cal / day</div></div>
-                  <div className="stat-box"><div className="stat-num">{mealPlan.weeklyProtein}g</div><div className="stat-label">Protein / day</div></div>
-                  <div className="stat-box"><div className="stat-num">30</div><div className="stat-label">Days of meals</div></div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
+                  <div style={{background:"var(--warm)",borderRadius:12,padding:16,textAlign:"center"}}>
+                    <div style={{fontFamily:"'Fraunces',serif",fontSize:26,color:"var(--forest)",fontWeight:700}}>{mealPlan.weeklyCalories}</div>
+                    <div style={{fontSize:11,color:"var(--muted)",marginTop:3,textTransform:"uppercase",letterSpacing:"0.5px"}}>Target cal / day</div>
+                  </div>
+                  <div style={{background:"var(--warm)",borderRadius:12,padding:16,textAlign:"center"}}>
+                    <div style={{fontFamily:"'Fraunces',serif",fontSize:26,color:"var(--forest)",fontWeight:700}}>{mealPlan.weeklyProtein}g</div>
+                    <div style={{fontSize:11,color:"var(--muted)",marginTop:3,textTransform:"uppercase",letterSpacing:"0.5px"}}>Target protein / day</div>
+                  </div>
                 </div>
-
+                <MedicalBanner />
                 {mealPlan.days.map((day,di)=>(
                   <div className="meal-day" key={di}>
                     <div className="meal-day-header">
@@ -473,70 +530,50 @@ Respond ONLY with valid JSON, no markdown:
                     </div>
                   </div>
                 ))}
-                <div className="warn-box" style={{marginTop:16}}><span>💡</span><span>Check sodium on all packaged items — tzatziki, salsa, canned goods. Aim for under 150mg per serving, especially important for blood pressure management.</span></div>
+                <div className="warn-box" style={{marginTop:16}}><span>💡</span><span>Check sodium on all packaged items. Aim for under 150mg per serving — especially important if you have high blood pressure or are managing a cardiovascular condition.</span></div>
               </div>
               <div style={{display:"flex",gap:10}}>
                 <button className="btn btn-outline btn-sm" onClick={()=>setStep(2)}>← Meal Plan</button>
-                <button className="btn btn-primary" style={{flex:1,marginTop:0}} onClick={()=>{if(logs.length===0)setLogs([{weight:parseFloat(profile.weight),date:new Date().toISOString().split("T")[0]}]);setStep(4);}}>Start Tracking →</button>
+                <button className="btn btn-primary" style={{flex:1,marginTop:0}} onClick={()=>setStep(4)}>See What's Next →</button>
               </div>
             </div>
           )}
 
-          {/* STEP 4 — TRACKER */}
+          {/* STEP 4 — UPSELL */}
           {step===4 && (
             <div>
-              <div className="card">
-                <p className="section-title">Progress tracker</p>
-                <p className="section-sub">Log your weight once a week — not daily. Daily fluctuations are noise. The weekly trend is the truth.</p>
-                <div className="stat-row">
-                  <div className="stat-box"><div className="stat-num" style={{color:"var(--coral)"}}>{startWeight||"—"}</div><div className="stat-label">Start</div></div>
-                  <div className="stat-box"><div className="stat-num">{currentWeight||"—"}</div><div className="stat-label">Current</div></div>
-                  <div className="stat-box"><div className="stat-num" style={{color:"var(--sage)"}}>{totalLost>0?`-${totalLost.toFixed(1)}`:"0"}</div><div className="stat-label">lbs lost</div></div>
-                </div>
-                {profile.goalWeight && <>
-                  <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"var(--muted)"}}><span>Progress to {profile.goalWeight} lbs</span><span>{pct.toFixed(0)}%</span></div>
-                  <div className="progress-bar-wrap"><div className="progress-bar-fill" style={{width:`${pct}%`}}/></div>
-                  <p style={{fontSize:11,color:"var(--muted)",marginBottom:18}}>{(currentWeight-parseFloat(profile.goalWeight)).toFixed(1)} lbs to go</p>
-                </>}
-                <div className="log-form">
-                  <div className="form-row"><label className="form-label">Date</label><input type="date" className="form-input" value={logDate} onChange={e=>setLogDate(e.target.value)} /></div>
-                  <div className="form-row"><label className="form-label">Weight (lbs)</label><input type="number" className="form-input" placeholder="271.5" value={logWeight} onChange={e=>setLogWeight(e.target.value)} /></div>
-                  <button className="btn btn-primary btn-sm" style={{marginBottom:0,whiteSpace:"nowrap"}} onClick={addLog}>Log it</button>
-                </div>
-                <div>
-                  {[...logs].reverse().map((log,i,arr)=>{
-                    const prev=arr[i+1];
-                    const change=prev?(log.weight-prev.weight).toFixed(1):null;
-                    return <div className="log-entry" key={i}>
-                      <span className="date">{new Date(log.date+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}</span>
-                      <span className="weight">{log.weight} lbs</span>
-                      {change!==null?<span className={parseFloat(change)<0?"change-down":"change-up"}>{parseFloat(change)<0?"▼":"▲"} {Math.abs(change)} lbs</span>:<span style={{fontSize:11,color:"var(--muted)"}}>Starting weight</span>}
-                    </div>;
-                  })}
-                  {logs.length===0&&<p style={{color:"var(--muted)",fontSize:13,textAlign:"center",padding:"16px 0"}}>No entries yet. Log your starting weight above.</p>}
+              <div className="upsell-hero">
+                <div className="upsell-badge">⭐ Ready for the next step?</div>
+                <h2>You have the plan.<br/>Now build the <em>habits</em>.</h2>
+                <p>The meal plan tells you what to eat. 30 Days to Stable addresses why you stop — and how to keep going anyway.</p>
+                <div className="upsell-price">
+                  <span className="amount">$47</span>
+                  <span className="period">one time</span>
                 </div>
               </div>
-
               <div className="card">
-                <p className="section-title" style={{fontSize:19}}>Daily habits that move the needle</p>
-                {[
-                  ["💧","Drink 80–100oz of water daily — reduces hunger significantly"],
-                  ["🚶","Walk 30 minutes every day — even slow walking matters enormously at this stage"],
-                  ["😴","Get 7–8 hours of sleep — sleep deprivation tanks fat-burning hormones"],
-                  ["🍽️","Eat protein first at every meal — it blunts blood sugar spikes and keeps you full longer"],
-                  ["📋","Keep your GLP-1 approval process moving — diet and medication are partners, not competition"],
-                ].map(([icon,text])=>(
-                  <div key={text} style={{display:"flex",gap:12,alignItems:"flex-start",marginBottom:12}}>
-                    <span style={{fontSize:18}}>{icon}</span>
-                    <span style={{fontSize:13,lineHeight:1.6}}>{text}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-                <button className="btn btn-outline btn-sm" onClick={()=>setStep(3)}>← Grocery List</button>
-                <button className="btn btn-outline btn-sm" onClick={()=>setStep(2)}>View Meal Plan</button>
-                <button className="btn btn-outline btn-sm" onClick={()=>window.print()}>🖨️ Print</button>
+                <p className="section-title" style={{fontSize:20}}>What's inside 30 Days to Stable</p>
+                <div style={{marginBottom:20}}>
+                  {[
+                    ["🧠","Daily behavioral prompts","30 days of guided check-ins that address the thoughts, patterns, and reflexes that derail progress — not just the food."],
+                    ["📋","Habit tracking system","Simple daily tracking that builds awareness without obsession. You can't change what you don't see."],
+                    ["🔄","The On Purpose Loop™","A framework for spotting self-sabotage before it happens and interrupting it with small, doable actions."],
+                    ["💬","Tiny Savage Promises™","A daily commitment practice that builds follow-through — the thing the meal plan alone can't give you."],
+                    ["📈","Track Your Receipts™","A method for documenting your wins so your brain starts believing the evidence of your own progress."],
+                  ].map(([icon,title,desc])=>(
+                    <div className="get-item" key={title}>
+                      <div className="get-icon">{icon}</div>
+                      <div><h4>{title}</h4><p>{desc}</p></div>
+                    </div>
+                  ))}
+                </div>
+                <MedicalBanner />
+                <a href={THIRTY_DAYS_LINK} target="_blank" rel="noreferrer" style={{textDecoration:"none"}}>
+                  <button className="btn btn-coral">Get 30 Days to Stable — $47 →</button>
+                </a>
+                <div className="no-thanks">
+                  <button onClick={()=>setStep(3)}>← Go back to my grocery list</button>
+                </div>
               </div>
             </div>
           )}
